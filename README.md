@@ -1,0 +1,7 @@
+-Created react app using vite
+-installed tailwindcss
+-created components and utils folder
+-header
+-sidebar
+-installed redux
+-menu collapse feature using redux
