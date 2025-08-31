@@ -1,15 +1,35 @@
-import React from "react";
-import { MENU_ICON, USER_ICON, YOUTUBE_LOGO } from "../utils/constants";
+import React, { useEffect, useState } from "react";
+import {
+  MENU_ICON,
+  USER_ICON,
+  YOUTUBE_LOGO,
+  YOUTUBE_SEARCH_API,
+} from "../utils/constants";
 import { useDispatch } from "react-redux";
 import { toggleMenu } from "../utils/appSlice";
 
 const Header = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => getSearchSuggestions(), 200);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [searchQuery]);
+  const getSearchSuggestions = async () => {
+    const data = await fetch(YOUTUBE_SEARCH_API + searchQuery);
+    const json = await data.json();
+    setSuggestions(json[1]);
+  };
   const dispatch = useDispatch();
   const toggleMenuHandler = () => {
     dispatch(toggleMenu());
   };
   return (
-    <div className="grid grid-flow-col p-4 shadow-lg">
+    <div className="fixed top-0 left-0 w-full z-50 grid grid-flow-col p-4 shadow-lg h-19 bg-white">
       <div className="flex col-span-1 gap-4">
         <img
           onClick={() => toggleMenuHandler()}
@@ -22,14 +42,29 @@ const Header = () => {
         </a>
       </div>
       <div className="col-span-10 ml-60">
-        <input
-          className="w-1/2 border border-gray-400 p-2 rounded-l-full"
-          type="text"
-          placeholder="Search"
-        ></input>
-        <button className="border border-gray-400 py-2 px-5 bg-gray-100 rounded-r-full ">
-          🔍
-        </button>
+        <div>
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setShowSuggestions(false)}
+            className="w-1/2 border border-gray-400 p-2 rounded-l-full"
+            type="text"
+            placeholder="Search"
+          ></input>
+          <button className="border border-gray-400 py-2 px-5 bg-gray-100 rounded-r-full ">
+            🔍
+          </button>
+        </div>
+        {showSuggestions && suggestions.length > 0 && (
+          <div className="absolute bg-white w-106 py-2 px-1 rounded-lg shadow-md shadow-black">
+            <ul>
+              {suggestions.map((s) => (
+                <li className="pb-2 font-semibold hover:bg-gray-100">{s}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div className="col-span-1">
         <img className="h-10" alt="usr-icon" src={USER_ICON} />
