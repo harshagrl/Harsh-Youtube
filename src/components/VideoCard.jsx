@@ -1,5 +1,3 @@
-import React from "react";
-
 const VideoCard = ({ info }) => {
   if (!info) return null;
 

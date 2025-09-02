@@ -5,16 +5,25 @@ import {
   YOUTUBE_LOGO,
   YOUTUBE_SEARCH_API,
 } from "../utils/constants";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toggleMenu } from "../utils/appSlice";
+import { cacheResults } from "../utils/searchSlice";
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState("");
-
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchCache = useSelector((store) => store.search);
+  const dispatch = useDispatch();
   useEffect(() => {
-    const timer = setTimeout(() => getSearchSuggestions(), 200);
+    const timer = setTimeout(() => {
+      if (searchCache[searchQuery]) {
+        setSuggestions(searchCache[searchQuery]);
+      } else {
+        getSearchSuggestions();
+      }
+    }, 200);
+
     return () => {
       clearTimeout(timer);
     };
@@ -23,13 +32,17 @@ const Header = () => {
     const data = await fetch(YOUTUBE_SEARCH_API + searchQuery);
     const json = await data.json();
     setSuggestions(json[1]);
+    dispatch(
+      cacheResults({
+        [searchQuery]: json[1],
+      })
+    );
   };
-  const dispatch = useDispatch();
   const toggleMenuHandler = () => {
     dispatch(toggleMenu());
   };
   return (
-    <div className="fixed top-0 left-0 w-full z-50 grid grid-flow-col p-4 shadow-lg h-19 bg-white">
+    <div className="fixed top-0 left-0 w-full z-50 grid grid-flow-col p-4 h-19 bg-white">
       <div className="flex col-span-1 gap-4">
         <img
           onClick={() => toggleMenuHandler()}
@@ -60,7 +73,9 @@ const Header = () => {
           <div className="absolute bg-white w-106 py-2 px-1 rounded-lg shadow-md shadow-black">
             <ul>
               {suggestions.map((s) => (
-                <li className="pb-2 font-semibold hover:bg-gray-100">{s}</li>
+                <li key={s} className="pb-2 font-semibold hover:bg-gray-100">
+                  {s}
+                </li>
               ))}
             </ul>
           </div>
